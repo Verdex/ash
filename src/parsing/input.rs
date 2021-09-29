@@ -93,7 +93,18 @@ mod test {
 
     #[test]
     fn get_char_returns_failure_index() {
-        assert!( false );
+        let mut input = Input::new("string");
+
+        input.get_char().expect("Should be able to get 's'");
+        input.get_char().expect("Should be able to get 't'");
+        input.get_char().expect("Should be able to get 'r'");
+        input.get_char().expect("Should be able to get 'i'");
+        input.get_char().expect("Should be able to get 'n'");
+        input.get_char().expect("Should be able to get 'g'");
+
+        let v = input.get_char();
+
+        assert_eq!( Err(6), v );
     }
 
     #[test]
@@ -124,36 +135,87 @@ mod test {
 
     #[test]
     fn exact_returns_index_on_failure() {
-        assert!( false );
+        let mut input = Input::new("string");
+
+        let v = input.exact("cat");
+
+        assert_eq!( Err(0), v );
     }
 
     #[test]
     fn exact_returns_target_string() {
-        assert!( false );
+        let mut input = Input::new("string");
+
+        input.exact("st");
+
+        let result = input.exact("ring");
+
+        match result {
+            Ok((s, _, _)) => assert_eq!( "ring", s ),
+            _ => assert!(false),
+        }
     }
 
     #[test]
     fn exact_returns_correct_start_index() {
-        assert!( false );
+        let mut input = Input::new("string");
+
+        input.exact("st");
+
+        let result = input.exact("ring");
+
+        match result {
+            Ok((_, s, _)) => assert_eq!( 2, s ),
+            _ => assert!(false),
+        }
     }
 
     #[test]
     fn exact_returns_correct_end_index() {
-        assert!( false );
+        let mut input = Input::new("string");
+
+        input.exact("st");
+
+        let result = input.exact("ring");
+
+        match result {
+            Ok((_, _, e)) => assert_eq!( 5, e ),
+            _ => assert!(false),
+        }
     }
     
     #[test]
     fn peek_error_returns_index() {
-        assert!( false );
+        let mut input = Input::new("string");
+
+        input.exact("string");
+
+        let v = input.peek();
+
+        assert_eq!( Err(6), v );
     }
 
     #[test]
     fn peek_success_returns_index_and_value() {
-        assert!( false );
+        let mut input = Input::new("string");
+
+        input.exact("st");
+
+        let v = input.peek();
+
+        assert_eq!( Ok((2, 'r')), v );
     }
 
     #[test]
     fn peek_success_does_not_increase_index() {
-        assert!( false );
+        let mut input = Input::new("string");
+
+        input.exact("st");
+
+        let v = input.peek();
+        assert_eq!( Ok((2, 'r')), v );
+
+        let v = input.peek();
+        assert_eq!( Ok((2, 'r')), v );
     }
 }
