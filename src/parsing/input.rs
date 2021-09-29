@@ -44,13 +44,12 @@ impl<'a> Input<'a> {
         }
     }
 
-    pub fn exact<'b>(&mut self, s : &'b str) -> Result<(&'b str, usize, usize), usize> {
-
+    pub fn exact<'b>(&mut self, s : &'b str) -> Result<(usize, usize, &'b str), usize> {
         let (start, _) = self.peek()?;
 
         let mut n = self.cs.clone();
 
-        let mut end = 0;
+        let mut end = start;
         for c in s.chars() {
             match n.next() {
                 Some((index, target)) if c == target => { end = index }, 
@@ -60,7 +59,37 @@ impl<'a> Input<'a> {
         }
 
         self.cs = n;
-        Ok((s, start, end))
+        Ok((start, end, s))
+    }
+
+    pub fn take_while(&mut self, f : impl Fn(char) -> bool) -> Result<(usize, usize, String), usize> {
+        let (start, mut c) = self.peek()?;
+        let mut end = start;
+        let mut cs = vec![]; 
+
+        while f(c) {
+            cs.push(c);
+            self.get_char();
+
+            match self.peek() {
+                Ok((index, cha)) => { end = index; c = cha; },
+                Err(_) => break,
+            }
+        }
+
+        Ok((start, end, cs.into_iter().collect()))
+    }
+
+    pub fn when(&mut self, f : impl Fn(char) -> bool) -> Result<(usize, char), usize> {
+        let (index, c) = self.peek()?;
+
+        if f(c) {
+            self.get_char();
+            Ok((index, c))
+        }
+        else {
+            Err(index)
+        }
     }
 }
 
@@ -151,7 +180,7 @@ mod test {
         let result = input.exact("ring");
 
         match result {
-            Ok((s, _, _)) => assert_eq!( "ring", s ),
+            Ok((_, _, s)) => assert_eq!( "ring", s ),
             _ => assert!(false),
         }
     }
@@ -165,7 +194,7 @@ mod test {
         let result = input.exact("ring");
 
         match result {
-            Ok((_, s, _)) => assert_eq!( 2, s ),
+            Ok((s, _, _)) => assert_eq!( 2, s ),
             _ => assert!(false),
         }
     }
@@ -179,7 +208,7 @@ mod test {
         let result = input.exact("ring");
 
         match result {
-            Ok((_, _, e)) => assert_eq!( 5, e ),
+            Ok((_, e, _)) => assert_eq!( 5, e ),
             _ => assert!(false),
         }
     }
@@ -217,5 +246,176 @@ mod test {
 
         let v = input.peek();
         assert_eq!( Ok((2, 'r')), v );
+    }
+
+    #[test]
+    fn take_while_failure_returns_index() {
+        let mut input = Input::new("string");
+
+        input.exact("string");
+
+        let result = input.take_while(|x| true);
+
+        assert_eq!( Err(6), result );
+    }
+
+    #[test]
+    fn take_while_success_returns_string() {
+        let mut input = Input::new("string");
+
+        let result = input.take_while(|x| x != 'i');
+
+        match result {
+            Ok((_, _, s)) => assert_eq!( "str", s ),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn take_while_success_returns_start_index() {
+        let mut input = Input::new("string");
+
+        input.get_char();
+
+        let result = input.take_while(|x| x != 'i');
+
+        match result {
+            Ok((s, _, _)) => assert_eq!( 1, s ),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn take_while_success_returns_end_index() {
+        let mut input = Input::new("string");
+
+        input.get_char();
+
+        let result = input.take_while(|x| x != 'i');
+
+        match result {
+            Ok((_, e, _)) => assert_eq!( 3, e ),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn take_while_success_leaves_final_char_alone() {
+        let mut input = Input::new("string");
+
+        input.take_while(|x| x != 'i');
+
+        let result = input.get_char();
+
+        match result {
+            Ok((_, c)) => assert_eq!( 'i', c),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn take_while_success_with_zero_chars_returns_empty_string() {
+        let mut input = Input::new("string");
+
+        let result = input.take_while(|x| false);
+
+        match result {
+            Ok((_, _, s)) => assert_eq!( "", s),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn take_while_success_with_zero_chars_returns_start_index() {
+        let mut input = Input::new("string");
+
+        let result = input.take_while(|x| false);
+
+        match result {
+            Ok((s, _, _)) => assert_eq!( 0, s),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn take_while_success_with_zero_chars_returns_end_index() {
+        let mut input = Input::new("string");
+
+        let result = input.take_while(|x| false);
+
+        match result {
+            Ok((_, e, _)) => assert_eq!( 0, e),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn when_failure_returns_end_index() {
+        let mut input = Input::new("string");
+
+        input.exact("string");
+
+        let result = input.when(|c| true);
+
+        assert_eq!( Err(6), result );
+    }
+
+    #[test]
+    fn when_failure_returns_target_index() {
+        let mut input = Input::new("string");
+
+        let result = input.when(|c| false);
+
+        assert_eq!( Err(0), result );
+    }
+
+    #[test]
+    fn when_failure_leaves_char_alone() {
+        let mut input = Input::new("string");
+
+        input.when(|c| false);
+
+        let result = input.get_char();
+
+        assert_eq!( Ok((0, 's')), result );
+    }
+
+    #[test]
+    fn when_success_returns_index() {
+        let mut input = Input::new("string");
+
+        input.get_char();
+
+        let result = input.when(|c| c == 't');
+
+        match result {
+            Ok((i, _)) => assert_eq!( 1, i ),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn when_success_returns_char() {
+        let mut input = Input::new("string");
+
+        input.get_char();
+
+        let result = input.when(|c| c == 't');
+
+        match result {
+            Ok((_, c)) => assert_eq!( 't', c ),
+            Err(_) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn when_success_moves_index() {
+        let mut input = Input::new("string");
+
+        input.when(|c| c == 's');
+
+        let result = input.get_char();
+
+        assert_eq!( Ok((1, 't')), result );
     }
 }
