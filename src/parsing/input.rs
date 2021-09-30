@@ -7,7 +7,6 @@ pub struct Input<'a> {
 
 pub struct RestorePoint<'a> {
     cs : CharIndices<'a>,
-    total_length : usize,
 }
 
 impl<'a> Input<'a> {
@@ -20,7 +19,6 @@ impl<'a> Input<'a> {
 
     pub fn restore_point(&self) -> RestorePoint<'a> {
         RestorePoint { cs: self.cs.clone()
-                     , total_length: self.total_length
                      }
     }
 
@@ -69,7 +67,7 @@ impl<'a> Input<'a> {
 
         while f(c) {
             cs.push(c);
-            self.get_char();
+            let _ = self.get_char().expect("Input::take_while fails because get_char fails after successful peek");
 
             match self.peek() {
                 Ok((index, cha)) => { end = index; c = cha; },
@@ -84,7 +82,7 @@ impl<'a> Input<'a> {
         let (index, c) = self.peek()?;
 
         if f(c) {
-            self.get_char();
+            let _ = self.get_char().expect("Input::when fails because get_char fails after successful peek");
             Ok((index, c))
         }
         else {
@@ -124,12 +122,12 @@ mod test {
     fn get_char_returns_failure_index() {
         let mut input = Input::new("string");
 
-        input.get_char().expect("Should be able to get 's'");
-        input.get_char().expect("Should be able to get 't'");
-        input.get_char().expect("Should be able to get 'r'");
-        input.get_char().expect("Should be able to get 'i'");
-        input.get_char().expect("Should be able to get 'n'");
-        input.get_char().expect("Should be able to get 'g'");
+        let _ = input.get_char().expect("Should be able to get 's'");
+        let _ = input.get_char().expect("Should be able to get 't'");
+        let _ = input.get_char().expect("Should be able to get 'r'");
+        let _ = input.get_char().expect("Should be able to get 'i'");
+        let _ = input.get_char().expect("Should be able to get 'n'");
+        let _ = input.get_char().expect("Should be able to get 'g'");
 
         let v = input.get_char();
 
@@ -175,7 +173,7 @@ mod test {
     fn exact_returns_target_string() {
         let mut input = Input::new("string");
 
-        input.exact("st");
+        let _ = input.exact("st");
 
         let result = input.exact("ring");
 
@@ -189,7 +187,7 @@ mod test {
     fn exact_returns_correct_start_index() {
         let mut input = Input::new("string");
 
-        input.exact("st");
+        let _ = input.exact("st");
 
         let result = input.exact("ring");
 
@@ -203,7 +201,7 @@ mod test {
     fn exact_returns_correct_end_index() {
         let mut input = Input::new("string");
 
-        input.exact("st");
+        let _ = input.exact("st");
 
         let result = input.exact("ring");
 
@@ -217,7 +215,7 @@ mod test {
     fn peek_error_returns_index() {
         let mut input = Input::new("string");
 
-        input.exact("string");
+        let _ = input.exact("string");
 
         let v = input.peek();
 
@@ -228,7 +226,7 @@ mod test {
     fn peek_success_returns_index_and_value() {
         let mut input = Input::new("string");
 
-        input.exact("st");
+        let _ = input.exact("st");
 
         let v = input.peek();
 
@@ -239,7 +237,7 @@ mod test {
     fn peek_success_does_not_increase_index() {
         let mut input = Input::new("string");
 
-        input.exact("st");
+        let _ = input.exact("st");
 
         let v = input.peek();
         assert_eq!( Ok((2, 'r')), v );
@@ -252,9 +250,9 @@ mod test {
     fn take_while_failure_returns_index() {
         let mut input = Input::new("string");
 
-        input.exact("string");
+        let _ = input.exact("string");
 
-        let result = input.take_while(|x| true);
+        let result = input.take_while(|_| true);
 
         assert_eq!( Err(6), result );
     }
@@ -275,7 +273,7 @@ mod test {
     fn take_while_success_returns_start_index() {
         let mut input = Input::new("string");
 
-        input.get_char();
+        let _ = input.get_char();
 
         let result = input.take_while(|x| x != 'i');
 
@@ -289,7 +287,7 @@ mod test {
     fn take_while_success_returns_end_index() {
         let mut input = Input::new("string");
 
-        input.get_char();
+        let _ = input.get_char();
 
         let result = input.take_while(|x| x != 'i');
 
@@ -303,7 +301,7 @@ mod test {
     fn take_while_success_leaves_final_char_alone() {
         let mut input = Input::new("string");
 
-        input.take_while(|x| x != 'i');
+        let _ = input.take_while(|x| x != 'i');
 
         let result = input.get_char();
 
@@ -317,7 +315,7 @@ mod test {
     fn take_while_success_with_zero_chars_returns_empty_string() {
         let mut input = Input::new("string");
 
-        let result = input.take_while(|x| false);
+        let result = input.take_while(|_| false);
 
         match result {
             Ok((_, _, s)) => assert_eq!( "", s),
@@ -329,7 +327,7 @@ mod test {
     fn take_while_success_with_zero_chars_returns_start_index() {
         let mut input = Input::new("string");
 
-        let result = input.take_while(|x| false);
+        let result = input.take_while(|_| false);
 
         match result {
             Ok((s, _, _)) => assert_eq!( 0, s),
@@ -341,7 +339,7 @@ mod test {
     fn take_while_success_with_zero_chars_returns_end_index() {
         let mut input = Input::new("string");
 
-        let result = input.take_while(|x| false);
+        let result = input.take_while(|_| false);
 
         match result {
             Ok((_, e, _)) => assert_eq!( 0, e),
@@ -353,9 +351,9 @@ mod test {
     fn when_failure_returns_end_index() {
         let mut input = Input::new("string");
 
-        input.exact("string");
+        let _ = input.exact("string");
 
-        let result = input.when(|c| true);
+        let result = input.when(|_| true);
 
         assert_eq!( Err(6), result );
     }
@@ -364,7 +362,7 @@ mod test {
     fn when_failure_returns_target_index() {
         let mut input = Input::new("string");
 
-        let result = input.when(|c| false);
+        let result = input.when(|_| false);
 
         assert_eq!( Err(0), result );
     }
@@ -373,7 +371,7 @@ mod test {
     fn when_failure_leaves_char_alone() {
         let mut input = Input::new("string");
 
-        input.when(|c| false);
+        let _ = input.when(|_| false);
 
         let result = input.get_char();
 
@@ -384,7 +382,7 @@ mod test {
     fn when_success_returns_index() {
         let mut input = Input::new("string");
 
-        input.get_char();
+        let _ = input.get_char();
 
         let result = input.when(|c| c == 't');
 
@@ -398,7 +396,7 @@ mod test {
     fn when_success_returns_char() {
         let mut input = Input::new("string");
 
-        input.get_char();
+        let _ = input.get_char();
 
         let result = input.when(|c| c == 't');
 
@@ -412,7 +410,7 @@ mod test {
     fn when_success_moves_index() {
         let mut input = Input::new("string");
 
-        input.when(|c| c == 's');
+        let _ = input.when(|c| c == 's');
 
         let result = input.get_char();
 
