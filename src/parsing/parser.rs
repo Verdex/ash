@@ -33,8 +33,20 @@ pub fn map<A : 'static + Clone, B : 'static + Clone>( p : Parser<A>, f : fn(A) -
     }))
 }
 
+pub fn exact<'a>(s : &'a str) -> Parser<&'a str> {
+    Parser::Parse(Box::new(move |input| {
+        match input.exact(s) {
+            Ok((start, end, value)) => Output::Success(value, start, end),
+            Err(index) => Output::Failure(index),
+        }
+    }))
+}
 
 impl<T : 'static + Clone> Parser<T> {
+    pub fn new(parser : impl Fn(&mut Input) -> Output<T> + 'static) -> Parser<T> {
+        Parser::Parse(Box::new(parser))
+    }
+    
     pub fn parse(&self, input : &mut Input) -> Output<T> {
         match self {
             Parser::Parse(p) => p(input),
