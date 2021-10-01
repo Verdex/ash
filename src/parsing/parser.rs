@@ -42,9 +42,28 @@ pub fn exact<'a>(s : &'a str) -> Parser<&'a str> {
     }))
 }
 
+pub fn any() -> Parser<char> {
+    Parser::Parse(Box::new(move |input| {
+        match input.get_char() {
+            Ok((index, value)) => Output::Success(value, index, index),
+            Err(index) => Output::Failure(index),
+        }
+    }))
+}
+
 impl<T : 'static + Clone> Parser<T> {
     pub fn new(parser : impl Fn(&mut Input) -> Output<T> + 'static) -> Parser<T> {
         Parser::Parse(Box::new(parser))
+    }
+
+    pub fn fatal(self) -> Parser<T> {
+        Parser::Parse(Box::new(move |input| {
+            match self.parse(input) {
+                it @ Output::Success(_, _, _) => it,
+                Output::Failure(index) => Output::Fatal(index),
+                Output::Fatal(index) => Output::Fatal(index),
+            }
+        })
     }
     
     pub fn parse(&self, input : &mut Input) -> Output<T> {
