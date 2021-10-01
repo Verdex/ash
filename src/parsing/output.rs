@@ -1,6 +1,6 @@
 
 pub enum Output<T> {
     Success(T, usize, usize),
-    Failure,
+    Failure(usize),
     Fatal(usize),
 }

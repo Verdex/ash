@@ -12,7 +12,7 @@ pub fn bind<A : 'static + Clone, B : 'static + Clone>( pa : Parser<A>, next : im
         let rp = input.restore_point();
         match pa.parse(input) {
             Output::Success(item, start, end) => next(item).parse(input), // TODO start/end needs to be fed into item ?
-            Output::Failure => { input.restore(rp); Output::Failure },
+            Output::Failure(index) => { input.restore(rp); Output::Failure(index) },
             Output::Fatal(index) => Output::Fatal(index),
         }
     }))
@@ -27,7 +27,7 @@ pub fn map<A : 'static + Clone, B : 'static + Clone>( p : Parser<A>, f : fn(A) -
         let rp = input.restore_point();
         match p.parse(input) {
             Output::Success(item, start, end) => Output::Success(f(item), start, end), 
-            Output::Failure => { input.restore(rp); Output::Failure },
+            Output::Failure(index) => { input.restore(rp); Output::Failure(index) },
             Output::Fatal(index) => Output::Fatal(index),
         }
     }))
@@ -48,8 +48,8 @@ impl<T : 'static + Clone> Parser<T> {
             let rp = input.restore_point();
             match self.parse(input) {
                 Output::Success(v, start, end) if pred(&v) => Output::Success(v, start, end),
-                Output::Success(v, _, _) => { input.restore(rp); Output::Failure },
-                Output::Failure => { input.restore(rp); Output::Failure },
+                Output::Success(v, index, _) => { input.restore(rp); Output::Failure(index) },
+                Output::Failure(index) => { input.restore(rp); Output::Failure(index) },
                 Output::Fatal(index) => Output::Fatal(index),
             }
         }))
@@ -58,13 +58,9 @@ impl<T : 'static + Clone> Parser<T> {
     pub fn maybe(self) -> Parser<Option<T>> {
         Parser::Parse(Box::new(move |input| {
             let rp = input.restore_point();
-            let index = match input.peek() {
-                Ok((i, _)) => i,
-                Err(i) => i,
-            };
             match self.parse(input) {
                 Output::Success(v, start, end) => Output::Success(Some(v), start, end),
-                Output::Failure => { input.restore(rp); Output::Success(None, index, index) },
+                Output::Failure(index) => { input.restore(rp); Output::Success(None, index, index) },
                 Output::Fatal(index) => Output::Fatal(index),
             }
         }))
@@ -80,7 +76,7 @@ impl<T : 'static + Clone> Parser<T> {
 
                 match self.parse(input) {
                     Output::Success(v, start, end) => items.push(v), // TODO start/end ?
-                    Output::Failure => { input.restore(rp); break },
+                    Output::Failure(_) => { input.restore(rp); break },
                     Output::Fatal(index) => return Output::Fatal(index),
                 }
             }
@@ -98,7 +94,7 @@ impl<T : 'static + Clone> Parser<T> {
 
             match self.parse(input) {
                 Output::Success(v, start, end) => items.push(v), // TODO start/end ?
-                Output::Failure => { input.restore(rp); return Output::Failure },
+                Output::Failure(index) => { input.restore(rp); return Output::Failure(index) },
                 Output::Fatal(index) => return Output::Fatal(index),
             }
 
@@ -107,7 +103,7 @@ impl<T : 'static + Clone> Parser<T> {
 
                 match self.parse(input) {
                     Output::Success(v, start, end) => items.push(v), // TODO start/end ?
-                    Output::Failure => { input.restore(rp); break },
+                    Output::Failure(_) => { input.restore(rp); break },
                     Output::Fatal(index) => return Output::Fatal(index),
                 }
             }
@@ -124,7 +120,7 @@ impl<T : 'static + Clone> Parser<T> {
 
             match self.parse(input) {
                 Output::Success(v, start, end) => Output::Success(v, start, end), 
-                Output::Failure => { input.restore(rp); other.parse(input) },
+                Output::Failure(_) => { input.restore(rp); other.parse(input) },
                 Output::Fatal(index) => Output::Fatal(index),
             }
         }))
