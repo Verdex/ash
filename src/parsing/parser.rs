@@ -63,7 +63,7 @@ impl<T : 'static + Clone> Parser<T> {
                 Output::Failure(index) => Output::Fatal(index),
                 Output::Fatal(index) => Output::Fatal(index),
             }
-        })
+        }))
     }
     
     pub fn parse(&self, input : &mut Input) -> Output<T> {
@@ -160,4 +160,7 @@ impl<T : 'static + Clone> Parser<T> {
 
 #[cfg(test)]
 mod test {
+    use super::*;
+    use monad::compute;
+
 }
