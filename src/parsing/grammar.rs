@@ -1,5 +1,5 @@
 
-use super::parser::{Parser, bind, unit, map, exact, any, peek};
+use super::parser::{Parser, bind, unit, exact, any, peek};
 use super::ast::Ast;
     
 use monad::compute;
@@ -15,7 +15,7 @@ fn number_literal() -> Parser<Ast> {
     // TODO also need to handle sci notation
     let p = any().when(|d| d.is_digit(10) ).one_or_more();
     
-    map(p, |ds| Ast::Integer(
+    p.map(|ds| Ast::Integer(
         ds.into_iter()
             .collect::<String>()
             .parse::<i64>()
@@ -31,7 +31,7 @@ fn bool_literal() -> Parser<Ast> {
         unit v
     };
     
-    map(p, |b| Ast::Bool(b.parse::<bool>().expect("Parsed bool fails parse::<bool>()")))
+    p.map(|b| Ast::Bool(b.parse::<bool>().expect("Parsed bool fails parse::<bool>()")))
 }
 
 /*fn symbol() -> Parser<String> {

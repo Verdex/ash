@@ -22,17 +22,6 @@ pub fn unit<T : Clone>( t : T ) -> Parser<T> {
     Parser::Unit(t)
 }
 
-pub fn map<A : 'static + Clone, B : 'static + Clone>( p : Parser<A>, f : fn(A) -> B ) -> Parser<B> {
-    Parser::Parse(Box::new(move |input| {
-        let rp = input.restore_point();
-        match p.parse(input) {
-            Output::Success(item, start, end) => Output::Success(f(item), start, end), 
-            Output::Failure(index) => { input.restore(rp); Output::Failure(index) },
-            Output::Fatal(index) => Output::Fatal(index),
-        }
-    }))
-}
-
 pub fn exact<'a>(s : &'a str) -> Parser<&'a str> {
     Parser::Parse(Box::new(move |input| {
         match input.exact(s) {
@@ -80,6 +69,17 @@ impl<T : 'static + Clone> Parser<T> {
             Parser::Parse(p) => p(input),
             Parser::Unit(t) => Output::Success(t.clone(), 0, 0), // TODO start and end?
         }
+    }
+
+    pub fn map<B : 'static + Clone>( self, f : fn(T) -> B ) -> Parser<B> {
+        Parser::Parse(Box::new(move |input| {
+            let rp = input.restore_point();
+            match self.parse(input) {
+                Output::Success(item, start, end) => Output::Success(f(item), start, end), 
+                Output::Failure(index) => { input.restore(rp); Output::Failure(index) },
+                Output::Fatal(index) => Output::Fatal(index),
+            }
+        }))
     }
 
     pub fn when(self, pred : fn(&T) -> bool) -> Parser<T> {
