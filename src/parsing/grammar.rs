@@ -22,6 +22,22 @@ fn number_literal() -> Parser<Ast> {
             .expect("Parsed integer fails parse::<i64>()")))
 } 
 
+fn bool_literal() -> Parser<Ast> {
+    let not_sym_char = || peek().when(|c| !c.is_digit(10) && *c != '_' && !c.is_alphabetic());
+       
+    let p = compute!{ bind, unit => 
+        v <- exact("true").or(exact("false"));
+        i <- not_sym_char();
+        unit v
+    };
+    
+    map(p, |b| Ast::Bool(b.parse::<bool>().expect("Parsed bool fails parse::<bool>()")))
+}
+
+/*fn symbol() -> Parser<String> {
+
+}*/
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -37,5 +53,41 @@ mod test {
         let v = p.parse(&mut input);
 
         assert!(matches!( v, Output::Success(Ast::Integer(1234), _, _)));
+    }
+
+    #[test]
+    fn bool_literal_should_parse_true() {
+        let p = bool_literal();
+        let mut input = Input::new("true ");
+
+        let v = p.parse(&mut input);
+
+        match v {
+            Output::Success(Ast::Bool(b), _, _) => assert_eq!( b, true ),
+            it @ _ => panic!( "unexpected output: {:?}", it ),
+        }
+    }
+
+    #[test]
+    fn bool_literal_should_parse_false() {
+        let p = bool_literal();
+        let mut input = Input::new("false ");
+
+        let v = p.parse(&mut input);
+
+        match v {
+            Output::Success(Ast::Bool(b), _, _) => assert_eq!( b, false ),
+            it @ _ => panic!( "unexpected output: {:?}", it ),
+        }
+    }
+
+    #[test]
+    fn bool_literal_should_not_parse_symbol_starting_with_bool() {
+        let p = bool_literal();
+        let mut input = Input::new("falsey");
+
+        let v = p.parse(&mut input);
+
+        assert!(matches!(v, Output::Failure(_)));
     }
 }
