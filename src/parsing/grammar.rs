@@ -12,6 +12,7 @@ pub fn parse() -> Vec<Ast> {
 fn number_literal() -> Parser<Ast> {
     // TODO also need to handle floats
     // TODO also need to handle negative
+    // TODO also need to handle sci notation
     let p = any().when(|d| d.is_digit(10) ).one_or_more();
     
     map(p, |ds| Ast::Integer(
