@@ -79,7 +79,6 @@ impl<T : 'static + Clone> Parser<T> {
         match self {
             Parser::Parse(p) => p(input),
             Parser::Unit(t) => Output::Success(t.clone(), 0, 0), // TODO start and end?
-            _ => panic!("blarg"),
         }
     }
 
