@@ -51,6 +51,15 @@ pub fn any() -> Parser<char> {
     }))
 }
 
+pub fn peek() -> Parser<char> {
+    Parser::Parse(Box::new(move |input| {
+        match input.peek() {
+            Ok((index, value)) => Output::Success(value, index, index),
+            Err(index) => Output::Failure(index),
+        }
+    }))
+}
+
 impl<T : 'static + Clone> Parser<T> {
     pub fn new(parser : impl Fn(&mut Input) -> Output<T> + 'static) -> Parser<T> {
         Parser::Parse(Box::new(parser))

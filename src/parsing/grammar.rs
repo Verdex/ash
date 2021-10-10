@@ -1,5 +1,5 @@
 
-use super::parser::{Parser, bind, unit, map, exact, any};
+use super::parser::{Parser, bind, unit, map, exact, any, peek};
 use super::ast::Ast;
     
 use monad::compute;
