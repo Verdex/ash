@@ -68,7 +68,7 @@ mod test {
     use monad::compute;
 
     #[test]
-    fn key_combinator_should_fail_illegitimate_target() {
+    fn key_parser_should_fail_illegitimate_target() {
         let p = key("blah");
         let mut input = Input::new("  blahx  ");
 
@@ -78,7 +78,7 @@ mod test {
     }
 
     #[test]
-    fn key_combinator_should_parse_legit_target() {
+    fn key_parser_should_parse_legit_target() {
         let p = key("blah");
         let mut input = Input::new("  blah  ");
 
