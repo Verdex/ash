@@ -46,14 +46,18 @@ fn bool_literal() -> Parser<Ast> {
     p.map(|b| Ast::Bool(b.parse::<bool>().expect("Parsed bool fails parse::<bool>()")))
 }
 
-fn key(s : &'static str) -> Parser<()> {
+fn key(s : &'static str) -> Parser<&'static str> {
     let not_sym_char = || peek().when(|c| !c.is_digit(10) && *c != '_' && !c.is_alphabetic());
 
     trim!( compute!{bind, unit => 
         _keyword <- exact(s);
         _i <- not_sym_char();
-        unit () 
+        unit s
     } )
+}
+
+fn punct(s : &'static str) -> Parser<&'static str> {
+    trim!( exact(s) )
 }
 
 fn junk() -> Parser<()> {
