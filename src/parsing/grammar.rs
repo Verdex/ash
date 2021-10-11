@@ -46,6 +46,52 @@ fn bool_literal() -> Parser<Ast> {
     p.map(|b| Ast::Bool(b.parse::<bool>().expect("Parsed bool fails parse::<bool>()")))
 }
 
+/*
+  private Parser<Expr> StrParser() {
+            static Parser<char> EscapeParser() 
+                => (from slash in Expect("\\")
+                   from other in Expect("t")
+                                 .Or(Expect("n"))
+                                 .Or(Expect("r"))
+                                 .Or(Expect("\\"))
+                                 .Or(Expect("\""))
+                   select other).Select( c => c switch {
+                       "t" => '\t',
+                       "n" => '\n',
+                       "r" => '\r',
+                       "\\" => '\\',
+                       "\"" => '"',
+                       _ => throw new Exception("Impossible escape character encountered"),
+                   });
+
+            static Parser<char> NotQuote() 
+                => from c in Any()
+                   where c != '"'
+                   select c;
+
+            return (from q1 in DoubleQuote() 
+                   from cs in EscapeParser().Or(NotQuote()).ZeroOrMore()
+                   from q2 in DoubleQuote() 
+                   select new Str(new string(cs.ToArray())) as Expr).Trim();
+        }
+*/
+
+fn string_literal() -> Parser<Ast> {
+
+    fn escape_parser() -> Parser<char> {
+        compute!{bind, unit => 
+            _slash <- the('\\');
+            other <- the('n').or(the('r'))
+                             .or(the('t'))
+                             .or(the('\\'))
+                             .or(the('"'));
+            unit other
+        }
+    }
+
+    unit(Ast::String("blarg".to_string()))
+}
+
 fn key(s : &'static str) -> Parser<&'static str> {
     let not_sym_char = || peek().when(|c| !c.is_digit(10) && *c != '_' && !c.is_alphabetic());
 
