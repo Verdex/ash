@@ -31,6 +31,17 @@ pub fn exact<'a>(s : &'a str) -> Parser<&'a str> {
     }))
 }
 
+pub fn the(c : char) -> Parser<char> {
+    Parser::Parse(Box::new(move |input| {
+        let rp = input.restore_point();
+        match input.get_char() {
+            Ok((index, value)) if c == value => Output::Success(value, index, index),
+            Ok((index, _)) => { input.restore(rp); Output::Failure(index) },
+            Err(index) => Output::Failure(index),
+        }
+    }))
+}
+
 pub fn any() -> Parser<char> {
     Parser::Parse(Box::new(move |input| {
         match input.get_char() {
